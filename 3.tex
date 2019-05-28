@@ -1,0 +1,86 @@
+\section{Linear Structure Growth}
+
+The evolution of density perturbations in the initial universe evolves accordingly to,
+\begin{equation*}
+\frac{\partial^2 \delta}{\partial t^2}  + 2 \frac{\dot{a}}{a}\frac{\partial \delta}{\partial t} = \frac{3}{2} \Omega_0 H_0^2 \frac{\partial}{a^3}
+\end{equation*}
+In the early Universe, the density perturbation can be separated in a spatial part and a temporral part: $\partial = D(t)\triangle(\textbf{x})$. Substituting this into the equation above gives,
+\begin{equation*}
+\frac{\mathrm{d}^2 D}{\mathrm{d}t^2} + 2\frac{\dot{a}}{a}\frac{\mathrm{d}D}{\mathrm{d}t} = \frac{3}{2}\Omega_0H_0^2\frac{1}{a^3}D
+\end{equation*}
+Knowing how $a$ evolves over time, this second order ODE can be solved analytically and numerically. First the analytical part is solved to check how the linearized density growth factor evolves over time.\footnote{The reason to show the analytical solution first is because there are various numerical methods to solve this second order ODE. If the analytical solution is known before hand, the numerical method can be chosen accordingly to this solution (the most difficult method is not always necessary, so if we are lucky we can use easy numerical methods.)} The assumption is made that we deal with a matter-dominated Einstein-de Sitter Universe, $\Omega_m = 1$. The scale factor then becomes,
+\begin{equation*}
+a(t) = \left(\frac{3}{2}H_0 t\right)^{2/3}
+\end{equation*}
+The time derivative of this scale factor is then,
+\begin{equation*}
+\frac{\mathrm{d}a(t)}{\mathrm{d}t} = \frac{2}{3}\left(\frac{3}{2}H_0t\right)^{-1/3}\cdot \frac{3}{2} H_0 = H_0 \left(\frac{3}{2}H_0 t\right)^{-1/3}
+\end{equation*}
+Filling this into the differential equation,
+\begin{gather*}
+\frac{\mathrm{d}^2D}{\mathrm{d}t^2} + 2 \frac{ H_0 \left(\frac{3}{2}H_0 t\right)^{-1/3}}{ \left(\frac{3}{2}H_0 t\right)^{2/3}}\frac{\mathrm{d}D}{\mathrm{d}t} = \frac{3}{2}\Omega_0 H_0^2 \frac{1}{ \left[\left(\frac{3}{2}H_0 t\right)^{2/3}\right]^3} D \\
+\frac{\mathrm{d}^2 D}{\mathrm{d}t^2 }+ \frac{2 H_0}{\frac{3}{2}H_0 t}\frac{\mathrm{d}D}{\mathrm{d}t} = \frac{3}{2}\Omega_0 H_0^2 \frac{1}{\left(\frac{3}{2}H_0 t\right)^2} D
+\end{gather*}
+\begin{equation}
+\frac{\mathrm{d}^2D}{\mathrm{d}t^2} + \frac{4}{3t} \frac{\mathrm{d}{D}}{\mathrm{d}t} = \frac{2 \Omega_0}{3 t^2} D
+\end{equation}
+The general solution to such an equation is given by $D(t) = A\cdot t^{\lambda}$. Substituting this form into the differential equation gives,
+\begin{gather*}
+\frac{\mathrm{d}^2}{\mathrm{d}t^2}\left(A\cdot t^{\lambda}\right) + \frac{4}{3t} \frac{\mathrm{d}}{\mathrm{d}t}\left(A\cdot t^{\lambda}\right) = \frac{2\Omega_0}{3t^2} A\cdot t^{\lambda}\\
+A\lambda(\lambda - 1) t^{\lambda - 2} + \frac{4}{3t}A\lambda t^{\lambda-1} = \frac{2\Omega_0}{3t^2} At^{\lambda}\\
+\frac{\lambda(\lambda-1)t^{\lambda}}{t^2} + \frac{4\lambda t^{\lambda}}{3t^2} = \frac{2\Omega_0}{3t^2} t^{\lambda}\\
+\lambda(\lambda-1) + \frac{4\lambda}{3} = \frac{2\Omega_0}{3}
+\end{gather*}
+Recall that $\Omega_0 = \Omega_m = 1$ since we deal with a matter-dominated Universe. Solving this for $\lambda$ gives then,
+\begin{gather*}
+\lambda^2 + \frac{1}{3}\lambda - \frac{2}{3} = 0\\
+\lambda_1  = \frac{2}{3}, \mathrm{\ \ \ \ \ \ } \lambda_2 = -1
+\end{gather*}
+So the analytical solution for the linearized density growth factor is:
+\begin{equation}
+D(t) = At^{2/3} + Bt^{-1}
+\end{equation}
+Where $A$ and $B$ are constants that can be found by filling in the initial conditions. To show how this works, case 1 will be demonstrated. For case 1 we have $D(1) = 3$ and $D'(1) = 2$. The time-derivative of $D$ is $D'(t) = \frac{2A}{3}t^{-1/3} - Bt^{-2}$. Filling in the initial conditions gives: $D(1) = A + B = 3$, $D'(1) = \frac{2A}{3} - B = 2$. Solving this system of equations for $A$ and $B$ gives then: $A = 3$, $B=0$. This can also be done for the other two cases but are not demonstrated here because it's quite straightforward how to solve them. The final equations for the 3 cases are then,
+\begin{gather}
+\mathrm{Case \ 1: \ \ \ \ \ } D(t) = 3t^{2/3}\\
+\mathrm{Case \ 2: \ \ \ \ \ } D(t) = 10t^{-1}\\
+\mathrm{Case \ 3: \ \ \ \ \ } D(t) = 3t^{2/3} + 2t^{-1}
+\end{gather}
+If we fill in $t = 1000$ yr, we get an indication of where the equations converge to. Case 1 is an increasing function that after 1000 yrs becomes $D(1000) = 300$. Case two is a decreasing function that after 1000 yrs becomes $D(1000) = \frac{1}{100}$, and case 3 is also an increasing function where the factor $\frac{2}{t}$ disappears when $t$ increases. This function therefore starts of as case 2 and then at some point switches to case 1. Case 2 is a situation which can easily go wrong if an incorrect numerical solver is used. This is because the values of the density growth get extremely small on larger timescales. Therefore, the Runga-Kutte method is used with an adaptive stepsize control. In particular, the 5th order Runga-Kutta method with adaptive stepsize control is used. The Runga-Kutte method is based on the Euler-method which is one of the easiest methods that can be used to solve first order ODEs.
+Since the ODE given in equation 5 is of second order, it might be convenient to first rewrite this equation to two separate first order ODEs. This can be done by making the substitution: $x(t) = \frac{\mathrm{d}D(t)}{\mathrm{d}t}$. Equation 5 can then be written as,
+\begin{equation*}
+\frac{\mathrm{d}x(t)}{\mathrm{d}t} + \frac{4}{3t}x(t) = \frac{2\Omega_0}{3t^2} D(t)
+\end{equation*}
+Rewriting this equation gives,
+\begin{equation*}
+\frac{\mathrm{d}x(t)}{\mathrm{d}t} = -\frac{4}{3t}x(t) + \frac{2\Omega_0}{3t^2} D(t)
+\end{equation*}
+Using the fact that we deal with a matter-dominated Universe, the final set of ODEs that has to be solved is then,
+\begin{gather}
+\frac{\mathrm{d}D(t)}{\mathrm{d}t} = x(t)\\
+\frac{\mathrm{d}x(t)}{\mathrm{d}t} = -\frac{4}{3t}x(t) + \frac{2}{3t^2} D(t)
+\end{gather}
+%IETS HIEROVER UITLEGGEN?
+By substituting the given initial conditions, the initial conditions for $x(1)$ can be found as well. Since $D'(t) = x(t)$, we simply have that $x(1) = D'(1)$, so the initial conditions for $x$ are simply equal to the initial conditions of the time derivative of $D$ (i.e. $D'(1)$). 
+ The code that is used in this exercise is given below.
+\lstinputlisting{Q3.py}
+The code produces a loglog plot of the numerical and analytical solution to the ODE given above for each case. It can be seen from the below figures (see next page) that the analytical and numerical solutions seem to match extremely well, indicating that the numerical method used in this solution paper is sufficient enough for solving such ODEs.
+\begin{figure}[h]
+\vspace{-1em}
+\centering
+\includegraphics[scale=0.5]{plots/ODE_case_1.png}
+\end{figure} 
+
+\begin{figure}[h]
+\vspace{-1em}
+\centering
+\includegraphics[scale=0.5]{plots/ODE_case_2.png}
+\end{figure}
+\begin{figure}[h]
+\vspace{-1em}
+\centering
+\includegraphics[scale=0.5]{plots/ODE_case_3.png}
+\caption{The three plots of the numerical (blue) and analytical (red) solutions to the ODE for three different initial conditions. The above image is the case where $D(1) = 3$, $D'(1) = 2$, the middle image is the case where $D(1) = 10$, $D'(1) = -10$, and the last image is the case where $D(1) = 5$, and $D'(1) = 0$.}
+\end{figure}
+
+\clearpage

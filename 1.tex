@@ -1,0 +1,223 @@
+
+\section{Normally distributed pseudo-random numbers}
+A normally distributed pseudo-random number generator can be split into two parts. To start with, a uniform pseudo-random number generator is needed. The uniform distribution can then be transformed to a normal distribution given a mean, $\mu$, and variance, $\sigma^2$. The Kolmogorov-Smirnov test and Kuiper's test can then be executed to test how consistent the pseudo random distribution is with a normal distribution. The code that is shared in this section is given below.
+
+\lstinputlisting[firstline = 32,lastline = 204]{functions.py}
+
+
+\subsection{Uniform distributed pseudo-random numbers}
+The uniform distribution used in this solution paper is obtained with the use of the so-called 'multiply with carry' and the XOR-shift method. The multiply with carry method makes use of the function:
+\begin{equation}
+x_{\mathrm{new}} = a\cdot(x_{old}\& [2^{32} - 1]) + (x_\mathrm{old} >> 32)
+\end{equation}
+Here $a$ is a constant value that is set to $a  = 4294957665$, $x_{\mathrm{old}}$ is an integer between $0 < x < 2^{64}-1$. The ampersand sign is a bitwise AND operator and the $>>$ sign is a shift operator, where the bits of an integer are shifted to the right 32 times. How the PRNG in this exercise works is as follows. First the seed is updated with the use of the XOR-generator. The output of the XOR-generator is converted to an unsigned 64-bit integer, to make sure that the seed always has 64 bits. This newly updated seed is subsequently given to the MWC function. Only the smallest 32 bits are taken from the output. The final outcome is then divided by the maximum integer that the MWC can possibly output, which is $2^{32} - 1$ (since only the smallest 32 bits are used from the MWC).
+The code used to create the uniform distribution is given below. 
+The output of the code are 3 different plots. The first plot is random number $x_i$ scatter plotted against random number $x_{i+1}$, where $i$ is $i = 0,1,2,...., 999$ (i.e. in total there are 1000 random numbers created ). The second plot is the pseudo random value $x_i$ plotted against the iterations, $i$, also for 1000 random numbers. The final plot is a histogram of one million pseudo random numbers.
+
+\lstinputlisting[firstline=19,lastline=47]{Q1.py}
+
+
+\begin{figure}[h]
+\vspace{-2.2em}
+\centering
+\includegraphics[scale=0.4]{plots/rand_nums.png}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.45]{plots/unif_dist.png}
+\caption{Upper left: scatter plot of random value $x_i$ against random value $x_{i+1}$, upper right:  random value plotted against iteration $i$, bottom: histogram of one million pseudo random numbers.}
+\end{figure}
+The first scatter plot seems to be quite uniformly distributed for 1000 gaussian random numbers. At some points it can be seen that there are some gaps, however these remain relatively small. The right plot of figure 1 shows how the value of the random number changes over every iteration. If the generated values come completely from a pseudo random number generator, one expects this plot to look similar like a white noise vs. time plot. \footnote{This comparison is made because the plot reminded me of white noise.} With an exception of a few gaps (e.g. see gap around iteration 500) the generated values do indeed seem to create such white noise. Finally, when looking at the histogram which is created from one million generated pseudo random numbers, it again seems to be extremely uniform. It is expected that for 20 bins, each bin fluctuates around the 50000, with a $1\sigma$ of $\sqrt{50000}$. The biggest fluctuation that was found was of the order $\sim 450$, which is, unfortunately roughly double the $1\sigma$ value. However, this deviation still remains small and therefore the PRNG is not adjusted any further for this solution paper.
+
+\subsection{Box-Muller transformation}
+Transforming a uniform distribution to a normal distribution can be done with the use of the Box-Muller transform. The Box-Muller transform goes as follows. Suppose we want two independent ($\mathcal{P}(x,y) = \mathcal{P}(x)\mathcal{P}(y)$) variables that are both drawn from gaussian distributions:
+\begin{gather*}
+X \sim G(\mu,\sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{1}{2}\left[\frac{x-\mu}{\sigma}\right]^2\right)\\
+Y \sim G(\mu,\sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{1}{2}\left[\frac{y-\mu}{\sigma}\right]^2\right)\
+\end{gather*}
+The joint distribution of these independent variables then becomes:
+\begin{equation*}
+\mathcal{P}(x,y) = \frac{1}{2\pi\sigma^2}\exp\left(-\frac{1}{2}\left[\frac{x-\mu}{\sigma}\right]^2\right)\exp\left(-\frac{1}{2}\left[\frac{y-\mu}{\sigma}\right]^2\right) = \frac{1}{2\pi\sigma^2}\exp\left(-\frac{1}{2\sigma^2}\left[(x-\mu)^2 + (y-\mu)^2\right]\right)
+\end{equation*}
+This equation can be converted to polar coordinates. Namely, take $x-\mu = r\sin(\theta)$, and $y - \mu = r\cos(\theta)$. Then the above equation reduces to:
+\begin{equation*}
+\mathcal{P}(x,y) = \mathcal{P}(r,\theta) = \frac{1}{2\pi\sigma^2}\exp\left(-\frac{r^2}{2\sigma^2}\right)
+\end{equation*}
+
+It can be seen from figure \ref{joint_dist} that the shape of the joint distribution of the two gaussians resembles a disk. The polar coordinates $r$ and $\theta$ can now be seen as the distance from one scatter point to the centre (=mean) of the circle and as the angle between the scatter point and the x-axis (or y-axis). Therefore, $\theta$ falls within $0 \leq \theta \leq 2\pi$. Since the angle of every scatter point is uniformly scattered (i.e there are as many scatter points on, for example, $\theta = 0$ as $\theta = \pi$), $\theta$ can be written in terms of a uniform distribution: $\theta = 2\pi \mathrm{U}(0,1)$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{joint_dist.png}
+\caption{A scatter plot of the joint distribution of variables from two gaussians with mean $\mu = 3$, and standard deviation $\sigma = 2.4$. The red circles have $1\sigma$, $2\sigma$, and $3\sigma$ radii (small circle to big circle respectively) and are centered around the means. }
+\label{joint_dist}
+\end{figure}
+Marginalizing the $\theta$ term out by integrating over the joint distribution gives:
+\begin{equation*}
+\mathcal{P}(r) = \int_0^{2\pi} \frac{1}{2\pi\sigma^2}\exp\left(-\frac{r^2}{2\sigma^2}\right) \mathrm{d}\theta = \frac{1}{\sigma^2} \exp\left(-\frac{r^2}{2\sigma^2}\right)
+\end{equation*}
+
+Now calculating  and working out the cumulative distribution for a random radius $R$,
+\begin{gather*}
+\mathcal{P}(r \leq R) = \int_0^R \frac{1}{\sigma^2} \exp\left(-\frac{r^2}{2\sigma^2}\right) r\mathrm{d}r = \frac{1}{\sigma^2}\left[-\sigma^2 \exp\left(-\frac{r^2}{2\sigma^2}\right)\right]_0^R\\
+= 1- \exp\left(-\frac{R^2}{2\sigma^2}\right)
+\end{gather*}
+Note that the factor $r$ appears in the integral because we are dealing with polar coordinates.  Radius $R$ can be any number between $0$ and $\infty$. If $R = \infty$ then $\mathcal{P}(r \leq \infty) = 1 - exp\left(\infty\right) = 1$, and if $R = 0$ then $\mathcal{P}(r \leq 0) = 1 - exp\left(0\right) = 0$. Therefore, the term $1 -  \exp\left(-\frac{R^2}{2\sigma^2}\right)$ falls within $0 \leq < \mathcal{P}(r \leq R) \leq 1$, and thus,
+\begin{equation*}
+1 -  \exp\left(-\frac{R^2}{2\sigma^2}\right) = 1 - \mathrm{U}(0,1)
+\end{equation*}
+Note that $R$ can be any value between zero and infinity and therefore it is also possible to write the equation above in terms of $r$. Solving this gives,
+\begin{equation*}
+\exp\left(-\frac{r^2}{2\sigma^2}\right) = \mathrm{U}(0,1)\\
+r = \sqrt{-2\sigma^2\ln\left( \mathrm{U}(0,1)\right)}
+\end{equation*}
+Substituting $r$ and $\theta$ back into the expressions $x-\mu = r\sin(\theta)$ and $y - \mu = r\cos(\theta)$ gives:
+\begin{gather}
+x = \sqrt{-2\sigma^2\ln\left( \mathrm{U}(0,1)\right)}\sin(2\pi\mathrm{U}(0,1)) + \mu \\
+y = \sqrt{-2\sigma^2\ln\left( \mathrm{U}(0,1)\right)}\cos(2\pi\mathrm{U}(0,1)) + \mu
+\end{gather}
+where $\mathrm{U}(0,1)$ is a random variable drawn from the uniform distribution. Note that the variable drawn from the uniform distribution in the natural logarithm is not the same as the variable drawn from the uniform distribution in the sin/cos terms. 
+The expressions above are also known as the Box-Muller transforms.
+The code used to work out question 1b is shown below\footnote{note that the box-muller transform itself is not in this python file, because it is a shared function in this exercise and is therefore listed in the introduction of Q1.},
+
+
+\lstinputlisting[firstline = 49, lastline = 78]{Q1.py}
+
+The output of the code is a histogram of 1000 variables drawn from a normal distribution with $\mu = 3$ and $\sigma = 2.4$.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.55]{plots/normal_dist.png}
+\vspace{-1.5em}
+\caption{Probability histogram of 1000 variables drawn from a normal distribution with $\mu = 3$ and $\sigma = 2.4$, with 14 bins. The green line represents the actual gaussian distribution with  $\mu = 3$ and $\sigma = 2.4$, and the black striped lines represent the $\sigma$ lines, where each line is indicated which sigma line it represents in the plot.}
+\end{figure}
+
+The figure shows quite some resembles between the histogram and the actual gaussian, which indicates that the drawn variables most probably do follow the gaussian distribution with $\mu = 3$ and $\sigma = 2.4$. The next section tests if this is actually the case.
+\newpage
+\subsection{KS-test}
+A Kolmogorov-Smirnov test (KS-test) can be used to test whether the RNG is able to produce a normal distribution with the use of the Box-Muller transform. The KS-test approximates the cumulative distribution of the drawn variables and compares it with the actual cumulative distribution of the probability distribution that one wants to compare it with. Given a set of variables drawn randomly from a distribution, the approximated CDF of variable $x_i$ can be found by counting how many variables have a lower value than $x_i$. This can be efficiently done by first sorting the randomly drawn variables. The sorting is done with the quicksort algorithm as shown in the code. The approximated CDF then becomes:
+\begin{equation*}
+S_N(x_i)= \frac{k+1}{N}
+\end{equation*}
+where $N$ is the total number of variables and $k$ is the number of variables that have a lower value than $x_i$. The actual CDF could be calculated with the use of a numerical integration method. However, this will take an enormous amount of time to compute. Therefore, a numerical approximated version of the CDF is used in this question. The CDF of a  normal distribution s given by:
+\begin{equation*}
+\mathcal{P}(x \leq X) = \frac{1}{2}\left[1 + \mathrm{erf}\left(\frac{X-\mu}{\sigma \sqrt{2}}\right)\right]
+\end{equation*}
+Where $\mathrm{erf}$ is the error function which is simply the integral of sigmoid shape: $\mathrm{erf}(x) = \frac{1}{\sqrt{\pi}}\int_{-x}^x e^{-(x')^2}\mathrm{d}x'$. For a standard normal distribution the equation shown above reduces to,
+\begin{equation*}
+\mathcal{P}(x \leq X) = \frac{1}{2}\left[1+\mathrm{erf}\left(\frac{X}{\sqrt{2}}\right)\right]
+\end{equation*}
+According to Abramowitz and Stegun\footnote{https://en.wikipedia.org/wiki/Error\_function\#Numerical\_approximations}, the error function can be approximated by,
+\begin{equation*}
+\mathrm{erf}(x) \approx 1 - (a_1 t + a_2 t^2 + a_3t^3 + a_4t^4 + a_5t^5)e^{-x^2}
+\end{equation*}
+where $t = \frac{1}{1+px}$, and $p = 0.3275911$, $a_1 = 0.254829592$, $a_2 = -0.284496736$, $a_3 = 1.421413741$, $a_4 = -1.453152027$, adn $a_5 = 1.061405429$. If used correctly, this approximation has a maximum error of $1.5\cdot 10^{-7}$.
+Having found the approximated CDF of the actual distribution $\mathcal{P}(x\leq X)$, and the approximated CDF of the drawn variables $S_N(x_i)$, the K-S statistic is given by,
+\begin{equation*}
+D = \underset{-\infty \leq x \leq \infty}{\max}|S_N(x_i) - \mathcal{P}(x \leq x_i)|
+\end{equation*}
+where $x_i$ is the value of the drawn variable. One should take into account that the cdf of a discrete distribution is a step function and therefore the previous value of the discrete cdf should always be taken into account in determining the distance between the actual CDF and the discrete CDF. The p-value of the observed KS-statistic is then given by:
+\begin{equation*}
+\mathcal{P}(D > \mathrm{observed}) = Q_{KS}\left(\left[\sqrt{N} + 0.12 + \frac{0.11}{\sqrt{N}}\right]D\right) = Q_{KS}(z)
+\end{equation*}
+where $N$ is the number of variables that were drawn,\footnote{This only holds for a discrete distribution that is compared with a continuous distribution.} and $Q_{KS}$ is given by:
+\begin{equation*}
+Q_{KS}(z) = \frac{\sqrt{2\pi}}{z}\sum_{k=1}^{\infty} e^{-(2k-1)^2\pi^2/(8z^2)}
+\end{equation*}
+This can be approximated as,
+\begin{equation}
+Q_{KS}(z) \approx \begin{cases}
+1 - \frac{\sqrt{2\pi}}{z}\left[(e^{-\pi^2/(8z^2)}) + (e^{-\pi^2/(8z^2)})^9 + (e^{-\pi^2/(8z^2)})^{25}\right] \mathrm{\ \ \ (z < 1.18)}\\
+2\left[(e^{-2z^2}) - (e^{-2z^2})^4 + (e^{-2z^2})^9\right] \mathrm{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (z\geq 1.18)}
+\end{cases}
+\end{equation}
+The code used for the Kolmogorov-Smirnov test is shown below,
+
+\lstinputlisting[firstline = 80, lastline = 146]{Q1.py}
+
+The output of the code is a graph of the p-values from the KS-test for different amount of samples drawn from the standard normal distribution that has been generated with the RNG described in the previous section. These p-values are also compared with the p-values produced by a scipy package that computes the KS-test.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/KS-test.png}
+\caption{Graph of the KS-test where the vertical axis represents the p-value, and the horizontal axis the amount of samples that are drawn from the standard normal distribution, in log-space. The red line is the own-written KS-test , the blue line is the KS-test as produced by the scipy package, and the green dotted horizontal line is the line that represents a p-value of 0.05.}
+
+
+\label{KS-test}
+\end{figure}
+
+It can be seen from figure \ref{KS-test} that the p-values of the samples drawn from the standard normal distribution all lie above $p=0.05$ for large sample sizes\footnote{The 'p-value' can be seen as the probability to reject to null hypothesis, which is in this case: NULL: the generated samples are drawn from a standard normal distribution}. On top of that, both the scipy package and the own implementation seem to produce quite similar results. The latter point indicates that the own implementation has been done correctly. The distribution in figure \ref{KS-test} fluctuates quite a bit. An explanation for this could be that the samples drawn from the distribution are not completely random but rather pseudo random. 
+
+The fact that all p-values are above the 0.05 line is a strong indication that the variables drawn from the RNG that are transformed with the Box-Muller method, follow the standard normal distribution.
+
+\subsection{Kuiper's test}
+
+Another, perhaps even better, test that can be used to evaluate the goodness of the RNG, is the Kuiper's test. This test is very similar to the KS-test, though it uses a different statistic and has a different cumulative distribution for the p-values. The method is the same, and therefore the approximations for the actual CDF of a standard normal distribution and the CDF of the samples are done in the same way as discussed in the previous section. 
+The Kuiper's statistic is given by,
+\begin{equation*}
+V = D_{+} + D_{-} =  \underset{-\infty \leq x \leq \infty}{\max} [S_N(x_i) - \mathcal{P}(x \leq x_i)] +  \underset{-\infty \leq x \leq \infty}{\max} [\mathcal{P}(x \leq x_i) - S_N(x_i)]
+\end{equation*}
+So instead of looking at the absolute distance between the two distributions at one value, it takes the sum of the maximum distance of $S_N(x_i)$ above and below $\mathcal{P}(x \leq x_i)$. The p-value is then given by,
+\begin{equation*}
+\mathcal{P}(V > \mathrm{observed}) = Q_{KP}([\sqrt{N}+0.155+\frac{0.24}{\sqrt{N}}]V) = Q_{KP}(\lambda)
+\end{equation*}
+Here $N$ is the number of samples and $Q_{KP}$ is given by,
+\begin{equation*}
+Q_{KP}(\lambda) = 2\sum_{j=1}^{\infty} (4j^2\lambda^2 -1 )e^{-2j^2\lambda^2}
+\end{equation*}
+
+This equation is not approximated in the code. Instead of summing over all the values, a while-loop is implemented and is only stopped if the absolute of the previous $Q_{KP}$ value minus the current $Q_{KP}$ value is smaller than $1\cdot10^{-8}$. The code that is used to calculate the Kuiper's test is shown below.
+\lstinputlisting[firstline = 148, lastline = 234]{Q1.py}
+
+The output of the code is a similar plot as shown in the previous section, but now done with the Kuiper's test (i.e. a graph of the p-values for different sample sizes and for both the own implementation and the astropy implementation).
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/kuiper-test.png}
+\caption{Graph of the Kuiper's test where the vertical axis represents the p-value, and the horizontal axis the amount of samples that are drawn from the standard normal distribution, in log-space. The red line is the own-written KS-test , the blue line is the Kuiper's test as produced by the astropy package, and the green dotted horizontal line is the line that represents a p-value of 0.05.}
+\label{kuiper}
+\end{figure}
+
+Figure \ref{kuiper} shows that almost all computed p-values seem to be equal to or greater than 0.05. However, the p-values obtained from the own implementation of the first few sample sizes do not match quite as good with the astropy version as it did before with the KS-test with the scipy version. One explanation could be that the calculations for $Q_{KP}$ are done differently in astropy. Nevertheless, the p-values do seem to match quite well for larger sample sizes, which is of course the most important part. The fact that two p-values lie below the 0.05 line is not dramatic, since these are relatively small sample sizes. If this would happen at the largest sample size then one would have to question whether the NULL hypothesis is correct or not. All in all, both the kuiper's test and the KS-test show that the samples drawn from the distribution match the standard normal distribution quite well for large sample sizes. 
+
+
+\subsection{Testing various given distributions}
+
+Now that it has been shown that the PRNG can create a standard normal distribution quite well, it can also be tested on other distributions. Given an unknown distribution, one can test whether it follows a standard normal distribution by comparing the samples with some samples of the standard normal distribution created by the PRNG described above. In this section, 10 unknown distributions are compared with a distribution created from the own implementation. This is done with the use of the KS-test again, though now some slight adjustments have been made to the KS-test. The KS-test described in section 1.3 is for a discrete distribution that is being compared with a continuous distribution. For this question we now instead have two discrete distributions. How this is done is as follows. To start with, the samples from both discrete distributions are sorted, with the use of the quicksort algorithm again. The KS-statistic is then determined by counting both distributions again, but now in a special way. When looking at the sorted sample values, if the second sample value of distribution 1 is greater than the second sample value of distribution 2, it means that distribution 2 has increased in step size at an earlier point. This means that the distance between the CDF distribution 1 and distribution 2 is determined by counting how much higher one distribution is at a certain point than the other. With the use of this logic, the distances of the CDF of both functions can be determined by comparing their sample values. When the sample value of one distribution at a certain point is lower than the other, then the step size is increased. When having found the maximum distance, the p-value can be calculated. This is done in the similar way as described in section 1.3. The only difference here is that the value of the total number of samples $N$ is approximated differently. Given that the first distribution has $N_1$ samples and the second distribution has $N_2$ samples, the effective number of samples is,
+\begin{equation*}
+N_e  = \frac{N_1 N_2}{N_1 + N_2}
+\end{equation*}
+In this question the amount of samples for both distributions is the same and therefore $N_e = 0.5N$, with $N$ is the number of samples used for both distributions. So the value $z$ (see section 1.3) is now given by $z = \left(\sqrt{N_e} + 0.12 + \frac{0.11}{\sqrt{N_e}}\right)D$, where $D$ is the KS-statistic.\\
+Each unknown distribution is compared with the distribution created from the PRNG and the box-muller transformation, for $\mu =0$ and $\sigma = 1$. The code that has been used for this comparison is shown below,
+\lstinputlisting[firstline = 236, lastline = 305]{Q1.py}
+\vspace{-1em}
+The output of the code is 10 individual plots that, one for each column of samples. Each plot contains the p-values for different sample sizes. The plots also contain the horizontal line at $p = 0.05$, which simply indicates the p-value of 0.05. If the calculated p-value falls below this line, then the null hypothesis is rejected. In this case, the null hypothesis is: the unknown distribution is sampled for a standard normal distribution. One assumption that has to be made here is that the distribution which it is being compared to (my own distribution) is sampled from a standard normal distribution. This assumption is quite fair since it has been shown previously that this is most probably the case.
+It can be seen from the plots that quite a lot of distributions have small p-values for large sample sizes. This means that also quite a lot of distributions are not similar to my own standard normal distribution. The p-values for the first three plots (column 0 to 2) are quite high for low sample sizes and extremely low for high sample sizes. The reason that we can reject the null hypothesis for these plots is that large sample sizes are more statistical relevant then small sample sizes. For example, it could be that the first 10 samples of these columns seemed to be distributed as a standard normal distribution, however 10 samples don't say much. For the high sample sizes we can definitely say that they don't match with our own standard normal distribution. The third column  (plot 4) shows something differently. The p-value for this distribution fluctuates for small sample sizes around the p=0.05 line and the for the large sample sizes it increases a lot. This gives us an indication that this distribution is most probably a standard normal distribution. The plot of the fifth distribution resembles the first 3 distributions a lot and can therefore also be rejected as being a standard normal distribution. Then we have the sixth distribution which is quite an interesting one. This one fluctuates quite a lot for different sample sizes. Only for a few sample sizes the p-value is below the 0.05. Nonetheless, for the largest sample sizes this should not happen if it was actually a standard normal distribution. With a bit of doubt, this distribution is therefore rejected to be a standard normal distribution as well. Then for the last 4 distributions we see similar shapes as for the first three again. The distributions seem to follow a standard normal distribution for small sample sizes, but when the number of samples increases it becomes quite clear that this is not actually the case. Therefore the null hypothesis is rejected for these distributions as well. The only distribution that can be said to be standard normal, with certainty, is the fourth distribution.
+
+\begin{figure}[h]
+\vspace{-1.3em}
+\centering
+\includegraphics[scale=0.5]{plots/KS-test_column_1.png}
+\end{figure}
+
+\vspace{-2.6em}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/KS-test_column_3.png}
+\end{figure}
+\begin{figure}[h]
+\vspace{-1cm}
+\centering
+\includegraphics[scale=0.5]{plots/KS-test_column_5.png}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/KS-test_column_7.png}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/KS-test_column_9.png}
+\caption{10 p-value vs. number of sample plots for 10 different unknown distributions. Each plot indicates which column is being compared with my own distribution. The p-values of 0.05 are indicated by the green dotted lines.}
+\end{figure}
+
+\clearpage

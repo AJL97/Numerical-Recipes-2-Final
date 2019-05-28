@@ -257,7 +257,7 @@ class Q4():
 			matrix[0,i] = complex(matrix[0,-i].real, -matrix[0,-i].imag)
 			#All the other elements are also conjugate symmetric
 			for j in range(1,size):
-				matrix[i,j] = complex(matrix[size-i,size-j].real, -matrix[size-i,size-j].imag)
+				matrix[i,j] = complex(matrix[-i,-j].real, -matrix[-i,-j].imag)
 		
 		for i in range(0,size):
 			if i == 0 or i == int(size/2):

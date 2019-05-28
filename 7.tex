@@ -1,0 +1,31 @@
+\section{Building a quadtree}
+
+The Barnes-Hut quadtree has many uses in the astrophysics. One key idea of such a tree is to calculate the combined effect of group particles together. In this exercise, this is done by calculating the multipole moments of first order $n=0$. The multipole moment of $n^{\mathrm{th}}$ order is given by,
+
+\begin{equation*}
+M_n (z_a) = \sum_{a} m_a \frac{1}{n!}(x_a - z_A)^{n!}
+\end{equation*}
+
+where $z_A$ is the centre of the group particles, $n$ is the moment to be calculated,
+$x_a$ is a particle within the group of particles, and $m_a$ are the belonging masses of each particle. For the first order multipole moment, $n=0$, this expression reduces to,
+\begin{equation*}
+M_0 = \sum_a m_a
+\end{equation*}
+Here it is assumed that $z_A$ is the centre of mass of the group. Thus,
+ it is the sum of masses of all particles within the group. Using a quadtree, groups of particles can be formed and the multipole moment of each group can then be calculated for $n=0$. For this quadtree, a maximum of 12 particles were contained in each leaf. If a node contains more than 12 particles, it divides itself up in 4 new nodes. These 4 new nodes are also known as the 'north-west', 'south-west', 'north-east', and 'south-east' nodes, since these are the directions where the new nodes end up. For each node in the tree, the multipole moment can be calculated by summing the masses of all the particles contained in the node. The dataset that has been given to us contains the x-y positions of 1200 particles together with the mass of each particle. However, I have checked the data beforehand and noticed that the mass of each particle is exactly the same. Ignoring the units, each particle has mass $0.012500000186264515$. So instead of using each mass in the tree, the multipole moments are calculated by summing the amount of particles within a node and then multiplying it by this given mass. The code that produces such a tree is shown in below,
+ \lstinputlisting{Q7.py}
+ 
+ The output of the code is a plot of the tree where the particles are scatter plotted and each node is plotted over this scatter plot as a rectangle. In addition, the multipole moment for the leaf node containing the particle with index $i = 100$ and all of its parent nodes (including the root node) has been saved in a textfile.
+ 
+ \lstinputlisting{textfiles/tree.txt}
+ 
+ \begin{figure}[h]
+ \centering
+\includegraphics[scale=0.7]{plots/tree.png} 
+ \caption{The quad tree containing all particles and all nodes and leafs. The nodes and leafs are indicated by the squares.}
+ \label{Tree}
+ \end{figure}
+
+It can be seen from figure \ref{Tree} that the positions of the particles are quite clustered. Nevertheless the tree does seem to do a good job in assigning all the particles to the correct node. It can also be seen that the multipole moments seem to be correct at least the for the first node (the complete tree) and for the leaf. For the first node we'd expect a multipole moment of $1200\cdot0.012500000186264515 = 15.000000223517418$, which is exactly what the textfile also reads. For the leaf we'd expect a maximum multipole moment of $12\cdot 0.012500000186264515  = 0.15000000223517418$. The multipole moment the tree found in this leaf was $\sim 0.125$, which is smaller than the maximum, and thus it could certainly be the correct answer. All in all, the tree has successfully been build.
+
+\clearpage

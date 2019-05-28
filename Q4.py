@@ -261,16 +261,14 @@ class Q4():
 		
 		for i in range(0,size):
 			if i == 0 or i == int(size/2):
+				#The points (0,Nyq) (Nyq,0) (Nyq,Nyq) are real numbers
+				matrix[int(size/2),i] = matrix[int(size/2),i].real + 0J
+				matrix[i,int(size/2)] = matrix[i,int(size/2)].real + 0J
 				continue
 			#The other values in the nyquist row and column are complex numbers, but
 			#conjugate symmetric since Nyq=-Nyq
 			matrix[int(size/2),i] = complex(matrix[int(size/2),i].real, -matrix[int(size/2),i].imag)
 			matrix[i,int(size/2)] = complex(matrix[i,int(size/2)].real, -matrix[i,int(size/2)].imag)
-		
-		#Four spots in the matrix that should have real numbers (0,0), (nyq,nyq), (0,nyq), (nyq,0)
-		matrix[int(size/2),0] = matrix[int(size/2),0].real + 0J
-		matrix[int(size/2),int(size/2)] = matrix[int(size/2),int(size/2)].real + 0J
-		matrix[0,int(size/2)] = matrix[0,int(size/2)].real + 0J
 		
 		return matrix
 	

@@ -1,0 +1,36 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\input{included_packages}
+
+
+\title{\vspace{-2cm}NUR - Assignment 2 }
+\author{Amy Louca (1687077)}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This solution paper is part of the course 'Numerical Recipes in Astrophysics'. The code introduction section will explain briefly some additional details on the code that are not shown/explained in the other sections and how the general code lay-out of each question looks like. Section one will discuss the random number generator that has been used throughout the paper and the goodness of it. Section 2 will use this RNG for the creation of a Gaussian random field with the use of inverse fourier transforms. Afterwards, the linear growth factor that is introduced in cosmology is found as a function of time with the use of a numerical ODE solver. Section 4 explains how a simulation can be made of the initial conditions of the Universe, following with section 5 which looks in more detail in mass assignment schemes. With the use of logistic regression, $\gamma$-ray burst are classified in section 6. Then finally a Barnes-Hut quadtree is build for 1200 particles, where the masses and positions were given.
+\end{abstract}
+
+\input{usage}
+
+\input{1}
+
+\input{2}
+
+\input{3}
+\newpage
+\input{4}
+
+\input{5}
+
+\input{6}
+
+\input{7}
+
+%\input{8}
+
+\end{document}

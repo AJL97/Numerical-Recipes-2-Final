@@ -1,0 +1,140 @@
+\newpage
+\section{Zeldovich approximation}
+The initial conditions for a cosmological problem can be set up with the use of the so-called Zeldovich approximation. This is a first order linear Lagrangian structure formation model. The simplest form of the approximation is given by,
+\begin{equation*}
+\textbf{x}(t) = \textbf{q} + D(t)\textbf{S}(\textbf{q})
+\end{equation*}
+
+Where $D(t)$ is the linear growth factor that has been shown before in the previous factor.\footnote{Since the expansion factor, $a$, relates to time, $t$, the linear growth factor can also be written as $D(t) = D(a(t))$} The momentum of the particles for the the initial conditions is given by,
+\begin{equation*}
+\textbf{p} = -(a-\triangle a/2)^2\dot{D}(a-\triangle a/2)\textbf{S}(\textbf{q})
+\end{equation*}
+Where $a$ is the expansion factor, which relates to the time $t$. The displacement vector $\textbf{S}$ is given by the fast fourier transform, FFT,
+\begin{equation*}
+\textbf{S}(\textbf{q}) = \alpha \sum_{k_x = - k_{\mathrm{max}}}^{k_{\mathrm{max}}} \sum_{k_y = - k_{\mathrm{max}}}^{k_{\mathrm{max}}}\sum_{k_z = - k_{\mathrm{max}}}^{k_{\mathrm{max}}} i\textbf{k}c_k \exp(i\textbf{k}\cdot\textbf{q})
+\end{equation*}
+where $\textbf{k}$ is the wave-vector for the $x$, $y$, and $z$ direction, $k_{x,y,z} = \frac{2\pi}{N_g}l,m,n$, with $N_g$ the number of grid points for each direction and $l,m,n = 0,\pm,....,N_g/2$. The power spectrum normalization factor $\alpha$ is normally set to 1, but in this question the the numpy and scipy packages are used to calculate the IFFT above which do need normalization constants. Numpy normalizes a one dimensional IFFT by dividing it by the number of grid points, whereas scipy normalizes a one dimensional IFFT by dividing it by the square root of the number of grid points. Therefore, to obtain the correct $\textbf{S}(\textbf{q})$ one has to multiply the found IFFT by $N_g$ for the numpy package and by $\sqrt{N_g}$ for the scipy package.\footnote{This is for the one dimensional IFFT, for two dimensions the factors would be $N_g^2$ and $N_g$ for numpy and scipy respectively and for three dimensions the factors would be $N_g^3$ and $(N_g)^{3/2}$ for numpy and scipy respectively.} The factor $c_k$ are random numbers given by $c_k = (a_k - ib_k)/2$, with,
+\begin{equation*}
+a_k = \sqrt{P(k)}\frac{\mathrm{Gauss}(0,1)}{k^2}\neq b_k = \sqrt{P(k)}\frac{\mathrm{Gauss}(0,1)}{k^2}
+\end{equation*}
+To make sure that the FFT is real, the gaussian random fields should satisfty $c_k$ = $c_{-k}^*$. The next section will discuss in steps how this initial field is obtained. The code that is shared in this section is given below,
+
+\lstinputlisting[firstline = 206, lastline = 287]{functions.py}
+
+
+\subsection{Linear Growth Factor - integration}
+
+The linear Growth factor as a function of the expansion factor, $a$, is one of the ingredients for finding the initial conditions of the particles. This growth factor in integral form is given by,
+\begin{equation*}
+D(z) = \frac{5\Omega_mH_0^2}{2}H(z) \int_z^{\infty} \frac{1+z'}{H^3(z')}\mathrm{d}z'
+\end{equation*}
+This equation can be rewritten in terms of the expansion factor by making the substitution $a = \frac{1}{1+z}$, so $\frac{\mathrm{d}z}{\mathrm{d}a} = -\frac{1}{a^2}$. The integration intervals then transform to $z \rightarrow a$ and $\infty \rightarrow 0$. Substituing this equation into the above equation for the linear growth factor gives,
+\begin{gather*}
+D(a) = \frac{5\Omega_m H_0^2}{2}H(a) \int_a^0 \frac{\frac{1}{a'}}{H^3(a')}\cdot \frac{-1}{(a')^2}\mathrm{d}a'\\
+= \frac{5\Omega_m H_0^2}{2}H(a) \int_0^a \frac{\left(\frac{1}{a'}\right)^3}{H^3(a')}\mathrm{d}a'
+\end{gather*}
+Here the Hubble factor as a function of $a$ is given by,
+\begin{equation*}
+H(a)^2 = H_0^2 (\Omega_m\left(\frac{1}{a}\right)^2 + \Omega_{\Lambda})
+\end{equation*}
+Substituting this equation back into the expression for the linear growth factor then gives,
+\begin{equation*}
+D(a) = \frac{5\Omega_mH_0^2}{2}H_0 \left[\Omega_m\left(\frac{1}{a}\right)^3 + \Omega_{\Lambda}\right]^{1/2} \int_0^a \frac{\left(\frac{1}{a'}\right)^3}{H_0^3 \left[\Omega_m\left(\frac{1}{a'}\right)^3+ \Omega_{\Lambda}\right]^{3/2} }\mathrm{d}a'
+\end{equation*}
+\begin{equation}
+D(a) = \frac{5\Omega_m}{2}\left[\Omega_m\left(\frac{1}{a}\right)^3 + \Omega_{\Lambda}\right]^{1/2} \int_0^a \frac{\left(\frac{1}{a}\right)^3}{\left[\Omega_m\left(\frac{1}{a'}\right)^3+\Omega_{\Lambda}\right]^{3/2}}\mathrm{d}a'
+\end{equation}
+Here $\Omega_m$ is the matter fraction of the Universe ($\Omega_m = 0.3$) and $\Omega_{\Lambda}$ is the dark energy fraction of the Universe (assummed to be $\Omega_{\Lambda} = 0.7$). The last equation can be numerically solved by using the midpoint Romberg-integration algorithm\footnote{\textbf{midpoint} Romberg-integration is needed because the value $a=0$ gives value that can not be numerically computed.}. This algorithm is based on Neville's algorithm and is not explained further in this report (since it has been discussed in the last report thoroughly). The integration has been calculated for a redshift of $z = 50$, which is equivalent to an expansion factor of $a = \frac{1}{51}$. The code that has been used to solve this is shown below,
+
+\lstinputlisting[firstline = 22,lastline = 33]{Q4.py}
+The output of the code is the value of the linear growth factor at $z = 50$ ($a = \frac{1}{51}$) with an accuracy of at least $10^{-5}$ (this has been checked by letting Wolfram Alpha solve the same integral).
+
+\lstinputlisting[firstline = 0, lastline = 1 ]{textfiles/int_div.txt}
+
+\subsection{Linear Growth Factor - Differentiation}
+
+To calculate the momentum, the derivative of the linear growth factor $\dot{D}(a)$ is needed. This time derivative has to be calculated indirectly since the linear growth factor as a function of time is not known in this exercise. The derivative that has to be calculated is therefore,
+\begin{equation*}
+\dot{D} (t) = \frac{\mathrm{d}D}{\mathrm{d}a}\dot{a}
+\end{equation*}
+Where the time derivative of the expansion factor is given by $\dot{a}(z) = H(z) a(z)$, or equivalently $H(a)\cdot a$. The analytical derivative is then given by,
+\begin{gather*}
+\dot{a}(z) = a(z) H_0\left[\Omega_m\left(\frac{1}{a}\right)^3 + \Omega_{\Lambda}\right]^{1/2}\\
+\frac{\mathrm{d}D}{\mathrm{d}a} = \frac{5\Omega_m H_0^2}{2}\left[\frac{\mathrm{d}H(a)}{\mathrm{d}a }\int_0^a\frac{\left(\frac{1}{a'}\right)^3}{H^3(a')}\mathrm{d}a'+ H(a)\frac{\mathrm{d}}{\mathrm{d}a}\int_0^a\frac{\left(\frac{1}{a'}\right)^3}{H^3(a')}\mathrm{d}a'\right] 
+\end{gather*}
+Working this out gives,
+\begin{gather*}
+\frac{\mathrm{d}H(a)}{\mathrm{d}a} = \frac{-3H_0\Omega_m}{2}\left[\Omega_m\left(\frac{1}{a}\right)^3+\Omega_{\Lambda}\right]^{-1/2}\cdot\frac{1}{a^4}\\
+\frac{\mathrm{d}}{\mathrm{d}a}\int_0^a\frac{\left(\frac{1}{a'}\right)^3}{H^3(a')}\mathrm{d}a' =  \frac{\left(\frac{1}{a'}\right)^3}{H^3(a')}|_{\substack{a'=a}} = \frac{\left(\frac{1}{a}\right)^3}{H^3(a)} = \frac{\left(\frac{1}{a}\right)^3}{H_0^3(\Omega_m\left(\frac{1}{a}\right)^3 + \Omega_{\Lambda})^{3/2}}\\
+\frac{\mathrm{d}D}{\mathrm{d}a} = \frac{5\Omega_m H_0^2}{2} \left[\frac{-3H_0\Omega_m\int_0^a\frac{\left(\frac{1}{a'}\right)^3}{H_0^3\left[\Omega_m\left(\frac{1}{a'}\right)^3 + \Omega_{\Lambda}\right]^{3/2}}\mathrm{d}a'}{2a^4\left[\Omega_m\left(\frac{1}{a}\right)^3 +\Omega_{\Lambda}\right]^{1/2}} + \frac{\frac{H_0}{a^3}\left[\Omega_m \frac{1}{a^3} + \Omega_{\Lambda}\right]^{1/2}}{H_0^3(\Omega_m\left(\frac{1}{a}\right)^3 +\Omega_{\Lambda})^{3/2}}\right]\\
+= \frac{5\Omega_m}{2}\left[\frac{-3\Omega_m\int_0^a \frac{\left(\frac{1}{a'}\right)^3}{\left[\Omega_m\left(\frac{1}{a'}\right)^3 + \Omega_{\Lambda}\right]^{3/2}}\mathrm{d}a'}{2a^4\left[\Omega_m\left(\frac{1}{a}\right)^3 + \Omega_{\Lambda}\right]^{1/2}} + \frac{1}{a^3\left[\Omega_{m}\left(\frac{1}{a}\right)^3+\Omega_{\Lambda}\right]}\right]\\
+= \frac{5\Omega_m}{2a^3}\frac{1}{\left[\Omega_m\left(\frac{1}{a}\right)^3+\Omega_{\Lambda}\right]^{1/2}}\left[\frac{-3\Omega_m}{2a}\int_0^a \frac{\left(\frac{1}{a'}\right)^3}{\left[\Omega_m\left(\frac{1}{a'}\right)^3+\Omega_{\Lambda}\right]^{3/2}}\mathrm{d}a' + \frac{1}{\left[\Omega_m\left(\frac{1}{a}\right)^3+\Omega_m\right]^{1/2}}\right]
+\end{gather*}
+Substituting this back into the expression for the time derivative of the linear growth factor gives,
+\begin{equation}
+\dot{D}(t) = \frac{5\Omega_m H_0}{2a^2}\left[\frac{-3\Omega_m}{2a}\int_0^a \frac{\left(\frac{1}{a'}\right)^3}{\left[\Omega_m\left(\frac{1}{a'}\right)^3+\Omega_{\Lambda}\right]^{3/2}}\mathrm{d}a' + \frac{1}{\left[\Omega_m\left(\frac{1}{a}\right)^3+\Omega_m\right]^{1/2}}\right]
+\end{equation}
+Using the numerically found integral from the previous question, the above expression can be calculated for a given expansion factor, $a$. It is also possible to calculate this derivative numerically. This has been done as well in this solution paper with the use of Ridder's method. This method is not discussed here in this solution paper since it has already been discussed in the previous one. The function that Ridder's method uses to differentiate is simply the expression of $D(a)$ that has been derived in the previous section. The output of Ridder's method is then multiplied by the factor $\dot{a} = H(a)\cdot a$. The code that has been used to compute both derivative's is shown below,
+
+\lstinputlisting[firstline=35,lastline=97]{Q4.py}
+
+The code outputs the derivative of the expansion factor at a redshift of $z = 50$, which is equivalent to an expansion factor of $a = \frac{1}{51}$, for both the numerical computation and the analytical one.
+
+\lstinputlisting[firstline = 2, lastline = 4]{textfiles/int_div.txt}
+
+\subsection{Cosmological simulation - 2D}
+
+A cosmological simulation of the initial conditions of the Universe can be made with the use of the Zeldovich approximation given at the beginning of this section. The displacement vector $\textbf{S}$ is made up in the following way. Each particle has an x and y position on the grid. When the particle is moving, it can move in the x and y direction as well. The displacement vector is thus a vector that consists of two components: $\textbf{S} = (S_x, S_y)$. Finding these displacements goes as follows. The term $i\textbf{k}c_k$ in the IFFT contains a vector as well, this vector is either in the x-direction or in the y-direction. So we can also write $ik_x c_k$ and $ik_yc_k$. The $c_k$ elements are thus for both in the x-direction and the y-direction the same. So first a 2D matrix is build that contains in each element a $c_k$ value, for a given wavenumber and power spectrum. This matrix is then made conjugate symmetric, just as explained in section 2. Then for each direction the matrix is multiplied with elements from either the $k_x$ vector or the $k_y$ vector. This maintains the symmetry, except at the nyquist column and row. So we then have to loop over this row/column to make it symmetric again. Now we have two symmetric 2D matrices, one for the x-direction and one for the y-direction. By taking the IFFT of these matrices we get the 2D real matrices $S_x$ and $S_y$. Each element gives now the displacement of the particle of that particular element. This matrix is multiplied with the growth factor. When time goes on, the expansion factor increases, and therefore the growth factor increases as well. So this growth vector times displacement matrices is added to the initial positions at each time step, which creates displacements of the particles. If everything goes well, the particles should converge \footnote{not really converge because if time goes on they would just pass through each other because we use the simple Zeldovich approximation.} to the correct density field. This density field is obtained by inverse fourier transforming the complex matrix that only contains the $c_k$ elements. In addition to this exercise, the momentum is also calculated for the particles in the x and y direction. The momentum is calculated with the use of the equation that has been shown at the beginning of the section. The code that is used to create everything explained above is shown below,
+
+\lstinputlisting[firstline = 98 ,lastline = 275]{Q4.py}
+
+The output of the code are multiple images which give the time evolution of the particles, which is put together to form a movie. In addition, the momentum in the y-direction is plotted for the 10 first particles and also the y-positions of the 10 first particles is plotted. Furthermore, to show that the time evolution of the particles goes correctly, an extra plot is made of the last time frame with the density field pasted behind.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/y_a.png}
+\caption{The y positions of the first 10 particles plotted against the expansion factor $a$ (i.e. time evolution of the 10 particles in the y-direction)}
+\label{y_pos}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/py_a.png}
+\caption{The y-momentum of the first 10 particles plotted against the expansion factor $a$ (i.e. time evolution of the y-momentum of the first 10 particles)}
+\label{py}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.65]{plots/density_field_Q4c.png}
+\caption{The density field for $n=-2$ of over plotted with the particle positions at $a = 1$. Note that this density field is different than the one shown in section 2 for $n=-2$. This is because instead of only multiplying the random numbers with the power spectrum $\sqrt{P(k)}$, it is now also divided by the wavenumbers squared. This makes the density field more smooth since the gaussian field has more dispersion in it.}
+\label{field_scatter}
+\end{figure}
+\newpage
+Figure \ref{y_pos} and \ref{py} show similar results. The y positions of the first 10 particles do no seem to change drastically. However, some change is seen in the positions. When looking at the first 10 particles in figure \ref{field_scatter}, this kind of make sense since the particles are situated in a dense area already, so they wouldn't have to move that much. The momentum of these particles do seem a bit odd. For example, particle 3 is going in the position plot in the positive direction, while particle 3 in the momentum plot has negative momentum. I wouldn't expect the moment to be negative if a particle is moving in the positive direction. It could be that there was a mistake in minus signs in the code, however this seemed quite unlikely after checking it 42 times. Unfortunately, I can therefore not explain what is physically happening with the momenta. However, when looking at the equation for the momentum it does make sense that they are negative. The term $(a - \frac{\triangle a}{2})^2$ is always positve because of the squared power. The term $\dot{D}(a-\frac{\triangle}{a})$ is also always positive because we have a universe that is expanding rather than contracting. Then we have the factor $S_y$. This factor is also positive in the area that we are looking at, this can be seen when looking at figure \ref{field_scatter}. Now the only factor that we are left with is $-1$, and this factor makes that the momenta of these particles in this area become negative. Therefore, the mathematical explanation checks out! The reason that the momenta do not go back to zero again is because we make the use of the rough Zeldovich approximation. This ensures that the particles keep moving even after $a=1$. Fortunately, figure \ref{field_scatter} shows that the position of the particles converge to the density at $a=1$ and do not cross each other at any point. The movie that is created (see folder \texttt{movies}) shows how these particles evolve over time. They appear to move quite slowly in the beginning but after a while they converge to the density field. 
+
+\subsection{Cosmological simulation - 3D}
+
+Now that it has been shown that the cosmological simulation works in 2D, it can also be applied in 3 dimensions. The method is completely the same as described above but now instead of having 2 directions for $\textbf{S}$, we now have 3 directions: $\textbf{S} = (S_x,S_y,S_z)$. Nevertheless, the method stays exactly the same: first create a 3D matrix filled with complex random numbers that have dispersion $\frac{\sqrt{P(k)}}{k^2}$ (the $c_k$ values). Then make this matrix symmetric, but now in three dimensions. Then multiply each matrix element with the corresponding wavenumbers (which is different in each direction). Then make sure that the elements containing the nyquist frequencies remain symmetric. Finally, by taking the IFFT we have found $S_x$, $S_y$, and $S_z$. The plotting is done by taking a slices box from the center for the slices $x-y$, $y-z$, and $x-z$. These are then plotted. In addition, the momenta are also calculated with the use of Romberg integration and the analytical derivative (see sections 4.1 and 4.2). The code that used for this exercise is shown below,
+
+\lstinputlisting[firstline = 277 ,lastline =522]{Q4.py}
+
+The output of the code are again time evolution plots which are put together to make a movie (see folder \texttt{movies}). In addition, the momenta of the 10 first particles in the z direction is plotted against the expansion factor (i.e. a time evolution of the z-momentum of the 10 first particles). Also, the z positions of the 10 first particles are plotted against the expansion factor. \footnote{The density field is not plotted together with the last frame of the position of the particles because I didn't have any time left to code this up. However, this was not the assignment anyways, but it would have been nice to see the results.}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/z_a.png}
+\caption{The z positions of the first 10 particles plotted against the expansion factor $a$ (i.e. time evolution of the 10 particles in the z-direction)}
+\label{z_pos}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{plots/pz_a.png}
+\caption{The z-momentum of the first 10 particles plotted against the expansion factor $a$ (i.e. time evolution of the z-momentum of the first 10 particles)}
+\label{z_p}
+\end{figure}
+
+The position plot shows that the particles do evolve drastically over time. This could indicate that these particles could be in a dense spot already as well, just as seen above. The momenta seem pretty much the same as the momenta seen in the previous section. The combination of these figures make it therefore seem as if these 10 particles are in a dense area in the z-direction. The movies produced show some interesting results as well. In all three directions we see white patches appear over time. This could be the result of us only looking at one slice of the whole cube. Those white patches are most likely non-dense areas which are surrounded in the outgoing directions by dense areas. The particles would therefore move out of the frame and white patches appear. In all three movies, no clear structure is seen at $a = 1$, except for the white patches.
+
+\clearpage

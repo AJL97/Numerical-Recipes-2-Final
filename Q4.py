@@ -25,8 +25,6 @@ class Q4():
 		function = self.F.int_function
 	
 		a = 1./51
-	
-		#int = self.F.ROM_integrator(10,function,0,a)
 
 		final = self.F.D(a)
 	
@@ -255,22 +253,23 @@ class Q4():
 		
 		for i in range(1,int(size/2)+1):
 			#The first column and row are conjugate symmetric. (0,0) is skipped.
-			matrix[i,0] = complex(matrix[size-i,0].real, -matrix[size-i,0].imag)
-			matrix[0,i] = complex(matrix[0,size-i].real, -matrix[0,size-i].imag)
+			matrix[i,0] = complex(matrix[-i,0].real, -matrix[-i,0].imag)
+			matrix[0,i] = complex(matrix[0,-i].real, -matrix[0,-i].imag)
 			#All the other elements are also conjugate symmetric
 			for j in range(1,size):
 				matrix[i,j] = complex(matrix[size-i,size-j].real, -matrix[size-i,size-j].imag)
 		
 		for i in range(0,size):
 			if i == 0 or i == int(size/2):
-				#The points (0,Nyq) (Nyq,0) (Nyq,Nyq) are real numbers
-				matrix[int(size/2),i] = matrix[int(size/2),i].real + 0J
-				matrix[i,int(size/2)] = matrix[i,int(size/2)].real + 0J
 				continue
 			#The other values in the nyquist row and column are complex numbers, but
 			#conjugate symmetric since Nyq=-Nyq
 			matrix[int(size/2),i] = complex(matrix[int(size/2),i].real, -matrix[int(size/2),i].imag)
 			matrix[i,int(size/2)] = complex(matrix[i,int(size/2)].real, -matrix[i,int(size/2)].imag)
+		
+		matrix[int(size/2),0] = matrix[int(size/2),0].real + 0J
+		matrix[int(size/2),int(size/2)] = matrix[int(size/2),int(size/2)].real + 0J
+		matrix[0,int(size/2)] = matrix[0,int(size/2)].real
 		
 		return matrix
 	
@@ -477,7 +476,6 @@ class Q4():
 		for x in range(0,int(size/2)+1):
 			for y in range(0,size):
 				for z in range(0,size):
-					
 					#Do nothing with first element, since it is 0 + 0J anyways
 					if x == 0 and y == 0 and z==0:
 						continue
@@ -509,7 +507,6 @@ class Q4():
 						matrix[x,y,z] = complex(matrix[-x,y,-z].real, -matrix[-x,y,-z].imag)
 					elif z == int(size/2) and y != int(size/2) and x != int(size/2):
 						matrix[x,y,z] = complex(matrix[-x,-y,z].real, -matrix[-x,-y,z].imag)
-						
 					elif x == int(size/2) and y == int(size/2) and z != int(size/2):
 						matrix[x,y,z] = complex(matrix[x,y,-z].real, -matrix[x,y,-z].imag)
 					elif x == int(size/2) and y != int(size/2) and z == int(size/2):
@@ -518,7 +515,8 @@ class Q4():
 						matrix[x,y,z] = complex(matrix[-x,y,z].real, -matrix[-x,y,z].imag)
 					#Make everyting else in the whole matrix also conjugate symmetric
 					else:
-						matrix[x,y,z] = complex(matrix[-x,-y,-z].real,-matrix[-x,-y,-z].imag)
+						matrix[x,y,z] = complex(matrix[-x,-y,-z].real,-matrix[-x,-y,-z].imag)		
+		
 		return matrix
 	
 execute_question = Q4()

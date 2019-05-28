@@ -267,9 +267,10 @@ class Q4():
 			matrix[int(size/2),i] = complex(matrix[int(size/2),i].real, -matrix[int(size/2),i].imag)
 			matrix[i,int(size/2)] = complex(matrix[i,int(size/2)].real, -matrix[i,int(size/2)].imag)
 		
+		#Four spots in the matrix that should have real numbers (0,0), (nyq,nyq), (0,nyq), (nyq,0)
 		matrix[int(size/2),0] = matrix[int(size/2),0].real + 0J
 		matrix[int(size/2),int(size/2)] = matrix[int(size/2),int(size/2)].real + 0J
-		matrix[0,int(size/2)] = matrix[0,int(size/2)].real
+		matrix[0,int(size/2)] = matrix[0,int(size/2)].real + 0J
 		
 		return matrix
 	

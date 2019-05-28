@@ -1,0 +1,12 @@
+\section*{Code Introduction}
+
+The complete code of this solution paper works as follows. Each question has its own python file that includes all the sub-questions. Whenever some functions need to be shared between (sub-)questions, they are added to the general 'functions' python file. These shared functions are then shown at the beginning of every main-question. The instances and imports that were used in this class are shown below.
+
+\lstinputlisting[firstline = 1, lastline = 30]{functions.py}
+\newpage
+The python file of each main question has a special lay-out that holds for all questions. Each main question python file contains a class that contains all subquestions and some extra functions needed for some subquestions. These extra functions are put in this class and not in functions.py because they were only used for one subquestion. The code that runs these programs is not shown in each question. Therefore, a demo is shown below,
+
+\lstinputlisting[firstline = 7,lastline = 17]{Q1.py}
+Then at the end of each program, the classes are called by,
+
+\lstinputlisting[firstline = 307,lastline = 308]{Q1.py}
